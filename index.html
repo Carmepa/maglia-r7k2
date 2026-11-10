@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maglia ai ferri</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Maglia">
+<meta name="theme-color" content="#f6eee4">
+<link rel="apple-touch-icon" href="icona-180.png">
+<link rel="icon" href="icona-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --sfondo: #f6eee4;
+    --carta: #fffaf4;
+    --testo: #3b2f2a;
+    --tenue: #8a7a70;
+    --rosso: #b8574c;
+    --rosso-chiaro: #f3d9d4;
+    --bordo: #e6d8c9;
+    --ombra: 0 1px 3px rgba(60, 40, 30, .12);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--sfondo); color: var(--testo);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  body.bloccato { overflow: hidden; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--sfondo);
+    padding: calc(10px + env(safe-area-inset-top)) 16px 8px; border-bottom: 1px solid var(--bordo); }
+  .testa { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  h1 { font-size: 21px; margin: 0; font-weight: 700; letter-spacing: .2px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  h1 span { color: var(--rosso); }
+  /* pulsanti Indietro e Home, uguali in tutti i livelli */
+  .nav { display: flex; gap: 8px; }
+  .nav button { font-size: 16px; font-weight: 600; padding: 9px 14px; border-radius: 12px; border: 1px solid var(--bordo);
+    background: var(--carta); color: var(--testo); white-space: nowrap; }
+  .nav button.home { background: var(--rosso); border-color: var(--rosso); color: #fff; }
+  .nav.nascosta { display: none; }
+  .cerca { display: flex; gap: 8px; }
+  .cerca input { flex: 1; min-width: 0; font-size: 17px; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--bordo); background: var(--carta); color: var(--testo); }
+  .cerca button { font-size: 15px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--bordo);
+    background: var(--carta); color: var(--testo); }
+  .cerca button.attivo { background: var(--rosso); color: #fff; border-color: var(--rosso); }
+  .righe { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; }
+  .righe::-webkit-scrollbar { display: none; }
+  .chip { flex: none; font-size: 14px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--bordo);
+    background: var(--carta); color: var(--testo); white-space: nowrap; }
+  .chip.attivo { background: var(--rosso); border-color: var(--rosso); color: #fff; }
+  .filtri { display: none; padding-top: 4px; }
+  .filtri.aperti { display: block; }
+  .filtri .etichetta { font-size: 12px; color: var(--tenue); margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .conta { font-size: 13px; color: var(--tenue); padding: 8px 16px 0; }
+  main { padding: 8px 12px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .carta { background: var(--carta); border-radius: 14px; overflow: hidden; box-shadow: var(--ombra);
+    border: 0; padding: 0; text-align: left; color: inherit; font: inherit; position: relative; }
+  .carta .foto { aspect-ratio: 1 / 1; width: 100%; object-fit: cover; display: block; background: #efe4d7; }
+  .carta .vuota { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+    background: #efe4d7; color: var(--tenue); font-size: 13px; }
+  .carta .nome { font-size: 14px; line-height: 1.25; padding: 8px 9px 2px; font-weight: 600;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .carta .info { font-size: 12px; color: var(--tenue); padding: 0 9px 9px; }
+  .carta .cuore { position: absolute; top: 6px; right: 6px; font-size: 18px; line-height: 1;
+    background: rgba(255,250,244,.9); border-radius: 999px; padding: 5px 6px; }
+  .altri { grid-column: 1 / -1; text-align: center; color: var(--tenue); font-size: 14px; padding: 12px; }
+  .vuoto { grid-column: 1 / -1; text-align: center; color: var(--tenue); padding: 40px 16px; font-size: 16px; }
+  /* pagine a tutto schermo: modello e scheda PDF */
+  .pagina { position: fixed; inset: 0; z-index: 20; background: var(--carta); display: none; flex-direction: column; }
+  .pagina.aperta { display: flex; }
+  .barra { display: flex; align-items: center; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+    background: var(--sfondo); border-bottom: 1px solid var(--bordo); }
+  .barra .titolo { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contenuto { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
+  .modello img { width: 100%; max-height: 58vh; object-fit: contain; background: #efe4d7; display: block; }
+  .modello .vuota { height: 30vh; display: flex; align-items: center; justify-content: center; background: #efe4d7; color: var(--tenue); }
+  .corpo { padding: 14px 16px 20px; }
+  .corpo h2 { font-size: 20px; margin: 0 0 6px; line-height: 1.25; }
+  .corpo .dove { font-size: 14px; color: var(--tenue); margin-bottom: 10px; }
+  .etichette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .etichette span { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--rosso-chiaro); }
+  .bottoni { display: flex; gap: 8px; }
+  .bottoni button { flex: 1; text-align: center; font-size: 17px; font-weight: 600; padding: 14px 10px; border-radius: 14px; border: 0; }
+  .apri { background: var(--rosso); color: #fff; }
+  .pref { background: #efe4d7; color: var(--testo); }
+  .lettore iframe { flex: 1; width: 100%; border: 0; background: #e9e2da; }
+  .lettore .sotto { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); font-size: 13px; color: var(--tenue);
+    text-align: center; background: var(--sfondo); border-top: 1px solid var(--bordo); }
+  .lettore .sotto a { color: var(--rosso); font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <div class="testa">
+    <h1>Maglia <span>ai ferri</span></h1>
+    <div class="nav nascosta" id="navLista">
+      <button type="button" class="indietro">&#8249; Indietro</button>
+      <button type="button" class="home">&#8962; Home</button>
+    </div>
+  </div>
+  <div class="cerca">
+    <input id="cerca" type="search" placeholder="Cerca: dolcevita, berretto, coperta…" autocomplete="off" enterkeyhint="search">
+    <button id="bFiltri" type="button">Filtri</button>
+  </div>
+  <div class="righe" id="categorie"></div>
+  <div class="righe" id="sottocategorie"></div>
+  <div class="filtri" id="filtri">
+    <div class="etichetta">Livello</div><div class="righe" id="livelli"></div>
+    <div class="etichetta">Tempo</div><div class="righe" id="tempi"></div>
+    <div class="etichetta">Stile</div><div class="righe" id="stili"></div>
+  </div>
+</header>
+<div class="conta" id="conta"></div>
+<main id="griglia"></main>
+
+<div class="pagina modello" id="pModello">
+  <div class="barra">
+    <div class="nav"><button type="button" class="indietro">&#8249; Indietro</button></div>
+    <div class="titolo"></div>
+    <div class="nav"><button type="button" class="home">&#8962; Home</button></div>
+  </div>
+  <div class="contenuto" id="cModello"></div>
+</div>
+
+<div class="pagina lettore" id="pLettore">
+  <div class="barra">
+    <div class="nav"><button type="button" class="indietro">&#8249; Indietro</button></div>
+    <div class="titolo"></div>
+    <div class="nav"><button type="button" class="home">&#8962; Home</button></div>
+  </div>
+  <div class="sotto">Se la scheda non si vede bene: <a id="linkDrive" href="#" target="_blank" rel="noopener">aprila in Google Drive</a></div>
+</div>
+
+<script src="dati.js"></script>
+<script>
+(function () {
+  "use strict";
+  var PASSO = 60;
+  var HOME = { cat: "Tutti", sub: "", liv: "", tem: "", sti: "", testo: "", vista: "lista", id: "" };
+  var stato = Object.assign({}, HOME);
+  var mostrati = PASSO;
+  var scrollLista = {};
+
+  function leggi(k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
+  function scrivi(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var preferiti = leggi("maglia-preferiti", {});
+
+  function semplice(s) {
+    return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  var PER_ID = {};
+  MODELLI.forEach(function (m) { m.cerca = semplice(m.n + " " + m.c + " " + m.s); PER_ID[m.i] = m; });
+
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+
+  function unici(campo) {
+    var c = {}; MODELLI.forEach(function (m) { var v = m[campo]; (Array.isArray(v) ? v : [v]).forEach(function (x) { if (x) c[x] = 1; }); });
+    return Object.keys(c);
+  }
+  var ORDINE_LIV = ["Principiante", "Intermedio", "Avanzato"];
+  var ORDINE_TEM = ["30 minuti", "2 ore", "Un weekend"];
+  var ORDINE_CAT = ["Maglioni & Cardigan", "Top, Bluse & Gilet", "Poncho & Oversize", "Accessori", "Neonati & Bambini", "Casa & Decorazioni", "Animali", "Preferiti dell'Editore"];
+  var PREF = "♥ Preferiti";
+  var CATEGORIE = ["Tutti", PREF].concat(unici("c").sort(function (a, b) { return ORDINE_CAT.indexOf(a) - ORDINE_CAT.indexOf(b); }));
+
+  /* ---------- livelli: l'app tiene la sua pila, Indietro toglie l'ultimo ---------- */
+  var pila = [];
+  function chiave(s) { return [s.cat, s.sub, s.liv, s.tem, s.sti, s.testo].join("|"); }
+  function vai(nuovo) {
+    if (stato.vista === "lista") scrollLista[chiave(stato)] = window.scrollY;
+    pila.push(Object.assign({}, stato));
+    stato = Object.assign({}, stato, nuovo);
+    try { history.pushState({ livello: pila.length }, ""); } catch (e) {}
+    if (stato.vista === "lista") mostrati = PASSO;
+    mostra(true);
+  }
+  function tornaUno() {
+    if (!pila.length) return;
+    stato = pila.pop();
+    $("cerca").value = stato.testo;
+    mostra(false);
+  }
+  function indietro() { tornaUno(); }
+  function casa() {
+    pila = [];
+    stato = Object.assign({}, HOME);
+    $("cerca").value = "";
+    mostrati = PASSO;
+    mostra(true);
+    window.scrollTo(0, 0);
+    document.querySelectorAll(".righe").forEach(function (r) { r.scrollLeft = 0; });
+  }
+  /* gesto "indietro" del telefono o tasto indietro di Android: un livello alla volta */
+  window.addEventListener("popstate", function () { tornaUno(); });
+
+  document.querySelectorAll(".indietro").forEach(function (b) { b.onclick = indietro; });
+  document.querySelectorAll(".home").forEach(function (b) { b.onclick = casa; });
+
+  /* ---------- lista ---------- */
+  function righeChip(contenitore, valori, campo, conTutti) {
+    contenitore.innerHTML = "";
+    (conTutti ? [""].concat(valori) : valori).forEach(function (v) {
+      var b = el("button", "chip" + (stato[campo] === v ? " attivo" : ""), v || "Tutti");
+      b.type = "button";
+      b.onclick = function () {
+        var n = {}; n[campo] = (campo !== "cat" && stato[campo] === v) ? "" : v;
+        if (campo === "cat") n.sub = "";
+        if (n[campo] === stato[campo] && campo === "cat") return;
+        vai(n); window.scrollTo(0, 0);
+      };
+      contenitore.appendChild(b);
+    });
+  }
+
+  function filtra() {
+    var parole = semplice(stato.testo).split(" ").filter(Boolean);
+    return MODELLI.filter(function (m) {
+      if (stato.cat === PREF) { if (!preferiti[m.i]) return false; }
+      else if (stato.cat !== "Tutti" && m.c !== stato.cat) return false;
+      if (stato.sub && m.s !== stato.sub) return false;
+      if (stato.liv && m.l !== stato.liv) return false;
+      if (stato.tem && m.t !== stato.tem) return false;
+      if (stato.sti && m.y.indexOf(stato.sti) < 0) return false;
+      for (var k = 0; k < parole.length; k++) if (m.cerca.indexOf(parole[k]) < 0) return false;
+      return true;
+    });
+  }
+
+  function carta(m) {
+    var b = el("button", "carta"); b.type = "button";
+    if (m.f) { var img = el("img", "foto"); img.loading = "lazy"; img.alt = m.n; img.src = "foto/" + m.i + ".jpg"; b.appendChild(img); }
+    else b.appendChild(el("div", "vuota", "foto nella scheda"));
+    b.appendChild(el("div", "nome", m.n));
+    b.appendChild(el("div", "info", [m.l, m.t].filter(Boolean).join(" · ")));
+    if (preferiti[m.i]) b.appendChild(el("span", "cuore", "♥"));
+    b.onclick = function () { vai({ vista: "modello", id: m.i }); };
+    return b;
+  }
+
+  var risultati = [];
+  var osservatore = new IntersectionObserver(function (voci) {
+    voci.forEach(function (v) { if (v.isIntersecting) { osservatore.unobserve(v.target); mostrati += PASSO; aggiungi(mostrati - PASSO); } });
+  }, { rootMargin: "600px" });
+
+  function aggiungi(da) {
+    var g = $("griglia"); var vecchio = $("altri"); if (vecchio) vecchio.remove();
+    var fr = document.createDocumentFragment();
+    risultati.slice(da, mostrati).forEach(function (m) { fr.appendChild(carta(m)); });
+    g.appendChild(fr);
+    if (mostrati < risultati.length) { var a = el("div", "altri", "Scorri per vederne altri…"); a.id = "altri"; g.appendChild(a); osservatore.observe(a); }
+  }
+
+  function disegnaLista() {
+    righeChip($("categorie"), CATEGORIE, "cat", false);
+    var subs = [];
+    if (stato.cat !== "Tutti" && stato.cat !== PREF) {
+      var c = {}; MODELLI.forEach(function (m) { if (m.c === stato.cat && m.s) c[m.s] = 1; });
+      subs = Object.keys(c).sort();
+    }
+    $("sottocategorie").style.display = subs.length ? "flex" : "none";
+    if (subs.length) righeChip($("sottocategorie"), subs, "sub", true);
+    righeChip($("livelli"), ORDINE_LIV, "liv", true);
+    righeChip($("tempi"), ORDINE_TEM, "tem", true);
+    righeChip($("stili"), unici("y").sort(), "sti", true);
+    var nf = (stato.liv ? 1 : 0) + (stato.tem ? 1 : 0) + (stato.sti ? 1 : 0);
+    $("bFiltri").textContent = nf ? "Filtri (" + nf + ")" : "Filtri";
+    $("bFiltri").classList.toggle("attivo", nf > 0);
+    $("navLista").classList.toggle("nascosta", chiave(stato) === chiave(HOME));
+    risultati = filtra();
+    $("conta").textContent = risultati.length === 1 ? "1 modello" : risultati.length.toLocaleString("it-IT") + " modelli";
+    var g = $("griglia"); g.innerHTML = "";
+    if (!risultati.length) {
+      g.appendChild(el("div", "vuoto", stato.cat === PREF
+        ? "Nessun preferito ancora. Apri un modello e tocca «Aggiungi ai preferiti»."
+        : "Nessun modello trovato. Prova con un’altra parola o togli qualche filtro."));
+      return;
+    }
+    aggiungi(0);
+  }
+
+  /* ---------- pagina del modello ---------- */
+  function disegnaModello(m) {
+    var p = $("pModello"); p.querySelector(".titolo").textContent = m.n;
+    var c = $("cModello"); c.innerHTML = ""; c.scrollTop = 0;
+    if (m.f) { var img = el("img"); img.src = "foto/" + m.i + ".jpg"; img.alt = m.n; c.appendChild(img); }
+    else c.appendChild(el("div", "vuota", "La foto è dentro la scheda"));
+    var corpo = el("div", "corpo");
+    corpo.appendChild(el("h2", null, m.n));
+    corpo.appendChild(el("div", "dove", m.c + (m.s ? " › " + m.s : "")));
+    var e = el("div", "etichette");
+    [m.l, m.t].concat(m.y).filter(Boolean).forEach(function (t) { e.appendChild(el("span", null, t)); });
+    corpo.appendChild(e);
+    var bt = el("div", "bottoni");
+    var a = el("button", "apri", "Apri la scheda"); a.type = "button";
+    a.onclick = function () { vai({ vista: "scheda", id: m.i }); };
+    var pr = el("button", "pref", preferiti[m.i] ? "♥ Nei preferiti" : "♡ Aggiungi ai preferiti"); pr.type = "button";
+    pr.onclick = function () {
+      if (preferiti[m.i]) delete preferiti[m.i]; else preferiti[m.i] = 1;
+      scrivi("maglia-preferiti", preferiti);
+      pr.textContent = preferiti[m.i] ? "♥ Nei preferiti" : "♡ Aggiungi ai preferiti";
+      listaDaRifare = true;
+    };
+    bt.appendChild(a); bt.appendChild(pr); corpo.appendChild(bt);
+    c.appendChild(corpo);
+  }
+
+  /* ---------- scheda PDF dentro l'app ---------- */
+  function disegnaScheda(m) {
+    $("pLettore").querySelector(".titolo").textContent = m.n;
+    var src = "https://drive.google.com/file/d/" + m.i + "/preview";
+    var vecchio = $("iframe");
+    if (!vecchio || vecchio.getAttribute("src") !== src) {
+      // pagina della scheda sempre nuova: cosi' non lascia passi nella cronologia
+      var f = document.createElement("iframe");
+      f.id = "iframe"; f.title = "Scheda del modello"; f.setAttribute("allow", "fullscreen"); f.src = src;
+      if (vecchio) vecchio.replaceWith(f); else $("pLettore").insertBefore(f, $("pLettore").querySelector(".sotto"));
+    }
+    $("linkDrive").href = "https://drive.google.com/file/d/" + m.i + "/view";
+  }
+
+  /* ---------- mostra il livello giusto ---------- */
+  var ultimaLista = null, listaDaRifare = false;
+  function mostra(nuovoPasso) {
+    var m = PER_ID[stato.id];
+    var vista = (stato.vista !== "lista" && m) ? stato.vista : "lista";
+    $("pModello").classList.toggle("aperta", vista === "modello" || vista === "scheda");
+    $("pLettore").classList.toggle("aperta", vista === "scheda");
+    document.body.classList.toggle("bloccato", vista !== "lista");
+    if (vista === "modello") disegnaModello(m);
+    if (vista === "scheda") { disegnaModello(m); disegnaScheda(m); }
+    if (vista !== "scheda" && $("iframe")) $("iframe").remove();
+    if (vista === "lista") {
+      var k = chiave(stato);
+      if (k !== ultimaLista || listaDaRifare) { disegnaLista(); ultimaLista = k; listaDaRifare = false;
+        if (!nuovoPasso) window.scrollTo(0, scrollLista[k] || 0); }
+    }
+  }
+
+  var t;
+  $("cerca").addEventListener("input", function (e) {
+    clearTimeout(t);
+    t = setTimeout(function () {
+      stato.testo = e.target.value; mostrati = PASSO;
+      mostra(true);
+    }, 250);
+  });
+  $("bFiltri").onclick = function () { $("filtri").classList.toggle("aperti"); };
+  mostra(true);
+})();
+</script>
+</body>
+</html>

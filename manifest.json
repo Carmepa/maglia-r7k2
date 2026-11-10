@@ -1,0 +1,12 @@
+{
+  "name": "Maglia ai ferri",
+  "short_name": "Maglia",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6eee4",
+  "theme_color": "#f6eee4",
+  "icons": [
+    { "src": "icona-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
